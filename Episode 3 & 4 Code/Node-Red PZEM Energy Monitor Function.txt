@@ -1,0 +1,52 @@
+// ---- Helper: Convert two 16-bit registers into a 32-bit FLOAT (Big-Endian) ----
+function toFloat(high, low) {
+    // Allocate a 4-byte buffer
+    let buffer = Buffer.alloc(4);
+
+    // Write the 16-bit values into the buffer in Big-Endian order
+    buffer.writeUInt16BE(high, 0);  // high word → bytes 0–1
+    buffer.writeUInt16BE(low, 2);   // low word  → bytes 2–3
+
+    // Read float32 from buffer
+    return buffer.readFloatBE(0);
+}
+
+
+// ---- Helper: Convert two 16-bit registers into a 32-bit UNSIGNED INTEGER ----
+function toUint32(high, low) {
+    // Combine two 16-bit registers into one 32-bit integer
+    return (high << 16) | low;
+}
+
+
+// ---- Helper: Round numbers to 2 decimal places ----
+function round2(v) {
+    return Math.round(v * 100) / 100;
+}
+
+
+// ---- RAW Modbus register array from the ESP32 ----
+let r = msg.payload;   // Example: [17256,13107,15627,...]
+
+
+// ---- Decode PZEM-004T v3.0 values ----
+// Each value uses 2 consecutive registers → FLOAT32
+let voltage      = round2(toFloat(r[0],  r[1]));   // Volts
+let current      = round2(toFloat(r[2],  r[3]));   // Amps
+let power        = round2(toFloat(r[4],  r[5]));   // Watts / kW depending on scaling
+let energy       = toUint32(r[6],  r[7]);          // Wh → integer
+let frequency    = round2(toFloat(r[8],  r[9]));   // Hz
+let pf           = round2(toFloat(r[10], r[11]));  // Power factor
+
+
+// ---- Output structure ----
+// You must configure the Function node to have 6 outputs.
+// Each output sends ONE measurement.
+return [
+    { payload: voltage },     // Output 1 → Voltage text node
+    { payload: current },     // Output 2 → Current text node
+    { payload: power },       // Output 3 → Power text node
+    { payload: energy },      // Output 4 → Energy text node
+    { payload: frequency },   // Output 5 → Frequency text node
+    { payload: pf }           // Output 6 → Power factor text node
+];
