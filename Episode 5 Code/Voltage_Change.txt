@@ -1,0 +1,11 @@
+{
+    "name": "Voltage",
+    "unit": "V",
+    "warnLow": 207,
+    "warnHigh": 244,
+    "critLow": 195,
+    "critHigh": 253,
+    "debounceSeconds": 5,
+    "warnRateLimitMin": 15,
+    "critRateLimitMin": 5
+}

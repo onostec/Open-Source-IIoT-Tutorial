@@ -1,0 +1,17 @@
+// Set point value
+var setPoint = 244;   // change this to your desired voltage threshold
+
+// Incoming voltage value
+var voltage = Number(msg.payload);
+
+// Prepare notification object
+if (voltage > setPoint) {
+    msg.payload = {
+            "title": "Voltage",
+            "body": "High"
+    };
+    return msg;
+} else {
+    // Optionally return null to suppress output when not high
+    return null;
+}

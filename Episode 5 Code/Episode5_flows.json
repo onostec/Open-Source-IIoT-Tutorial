@@ -1,0 +1,29 @@
+[
+    {
+        "id": "9c90457fdb8a1aa6",
+        "type": "change",
+        "z": "02e569fa997a095d",
+        "name": "Power Factor",
+        "rules": [
+            {
+                "t": "set",
+                "p": "meta",
+                "pt": "msg",
+                "to": "{\"name\":\"PowerFactor\",\"unit\":\"PF\",\"warnLow\":0.5,\"warnHigh\":1,\"critLow\":0.45,\"critHigh\":1,\"debounceSeconds\":10,\"warnRateLimitMin\":30,\"critRateLimitMin\":10}",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 950,
+        "y": 480,
+        "wires": [
+            [
+                "aa3b6e9f1d44f161"
+            ]
+        ]
+    }
+]

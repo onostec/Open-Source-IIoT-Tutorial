@@ -1,0 +1,11 @@
+{
+    "name": "Current",
+    "unit": "A",
+    "warnLow": 0,
+    "warnHigh": 10,
+    "critLow": 0,
+    "critHigh": 15,
+    "debounceSeconds": 2,
+    "warnRateLimitMin": 10,
+    "critRateLimitMin": 2
+}

@@ -1,0 +1,11 @@
+{
+    "name": "PowerFactor",
+    "unit": "PF",
+    "warnLow": 0.5,
+    "warnHigh": 1,
+    "critLow": 0.45,
+    "critHigh": 1,
+    "debounceSeconds": 10,
+    "warnRateLimitMin": 30,
+    "critRateLimitMin": 10
+}

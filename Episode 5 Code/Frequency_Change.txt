@@ -1,0 +1,11 @@
+{
+    "name": "Frequency",
+    "unit": "Hz",
+    "warnLow": 49.8,
+    "warnHigh": 50.2,
+    "critLow": 49.5,
+    "critHigh": 50.5,
+    "debounceSeconds": 3,
+    "warnRateLimitMin": 15,
+    "critRateLimitMin": 5
+}

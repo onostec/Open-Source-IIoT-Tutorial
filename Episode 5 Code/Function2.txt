@@ -1,0 +1,145 @@
+/**
+ * ============================================================================
+ * PZEM-004T MULTI-PARAMETER ALARM ENGINE - PORTUGAL
+ * ============================================================================
+ * FEATURES:
+ * - Debounce: Requires X seconds of continuous error to trigger alert.
+ * - Rate Limiting: Prevents repetitive messages for persistent issues.
+ * - Zero-Suppression: Ignores 0 values (device off).
+ * - Multi-Channel: Tracks state for V, I, P, F, PF independently.
+ * * OUTPUT 1: WARNING ALERTS
+ * OUTPUT 2: CRITICAL ALERTS
+ * ============================================================================
+ */
+
+// --- [1] INPUT VALIDATION ---
+const value = Number(msg.payload);
+const cfg = msg.meta || {};
+const now = Date.now();
+
+// Filter out 0 (off state), non-numbers, or missing config
+if (!Number.isFinite(value) || value === 0 || !cfg.name) {
+    node.status({ fill: "grey", shape: "ring", text: "Value 0 or Invalid" });
+    return null; 
+}
+
+// --- [2] STATE MANAGEMENT ---
+const key = cfg.name;
+let currentState = context.get(`${key}_state`) || "NORMAL";
+let lastWarnTime = context.get(`${key}_lastWarn`) || 0;
+let lastCritTime = context.get(`${key}_lastCrit`) || 0;
+let firstSeenOutOfRange = context.get(`${key}_firstSeen`) || null;
+
+// Config timing setup
+const WARN_RATE_MS = (cfg.warnRateLimitMin || 10) * 60000;
+const CRIT_RATE_MS = (cfg.critRateLimitMin || 5) * 60000;
+const DEBOUNCE_MS = (cfg.debounceSeconds || 5) * 1000;
+
+// --- [3] EVALUATE SEVERITY & DIRECTION ---
+let instantSeverity = "NORMAL";
+let direction = ""; // Track if it is a High or Low breach
+
+if (value <= cfg.critLow) {
+    instantSeverity = "CRITICAL";
+    direction = "LOW";
+} else if (value >= cfg.critHigh) {
+    instantSeverity = "CRITICAL";
+    direction = "HIGH";
+} else if (value <= cfg.warnLow) {
+    instantSeverity = "WARNING";
+    direction = "LOW";
+} else if (value >= cfg.warnHigh) {
+    instantSeverity = "WARNING";
+    direction = "HIGH";
+}
+
+// Store direction in context so it survives the debounce period
+if (instantSeverity !== "NORMAL") {
+    context.set(`${key}_direction`, direction);
+}
+
+// --- [4] DEBOUNCE LOGIC ---
+let confirmedSeverity = "NORMAL";
+
+if (instantSeverity !== "NORMAL") {
+    if (!firstSeenOutOfRange) {
+        firstSeenOutOfRange = now;
+        context.set(`${key}_firstSeen`, firstSeenOutOfRange);
+    }
+    
+    if (now - firstSeenOutOfRange >= DEBOUNCE_MS) {
+        confirmedSeverity = instantSeverity;
+    }
+} else {
+    context.set(`${key}_firstSeen`, null);
+    context.set(`${key}_state`, "NORMAL");
+    firstSeenOutOfRange = null;
+}
+
+// --- [5] MULTI-PARAMETER STATUS UPDATE ---
+let statusMap = context.get("global_status_map") || {};
+
+statusMap[cfg.name] = {
+    fill: confirmedSeverity === "CRITICAL" ? "red" : (confirmedSeverity === "WARNING" ? "yellow" : "green"),
+    text: `${value}${cfg.unit}`
+};
+context.set("global_status_map", statusMap);
+
+let statusParts = [];
+let overallFill = "green";
+
+for (const name in statusMap) {
+    statusParts.push(`${name.charAt(0)}: ${statusMap[name].text}`);
+    if (statusMap[name].fill === "red") overallFill = "red";
+    else if (statusMap[name].fill === "yellow" && overallFill !== "red") overallFill = "yellow";
+}
+
+node.status({
+    fill: overallFill,
+    shape: "dot",
+    text: statusParts.join(" | ")
+});
+
+// --- [6] ALERT DISPATCH (FORMATTED OUTPUT) ---
+let warnMsg = null;
+let critMsg = null;
+
+const createAlert = (sev) => {
+    const d = new Date();
+    const alertDir = context.get(`${key}_direction`) || "";
+    
+    // CHANGE THESE TWO LINES FOR YOUR COUNTRY
+    const locale = 'en-NG'; 
+    const timezone = 'Africa/Lagos';
+
+    const timeStr = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timezone });
+    const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: timezone }).replace(/\//g, '-');
+   
+    return {
+        payload: {
+            // Updated title to include direction (e.g., Alert:CRITICAL HIGH)
+            "title": `${sev} ALERT: ${alertDir}`,
+            "body": `${cfg.name}: ${value}${cfg.unit}, ${timeStr}, ${dateStr}`
+        },
+        meta: cfg
+    };
+};
+
+// Trigger logic for Critical (Output 2)
+if (confirmedSeverity === "CRITICAL") {
+    if (currentState !== "CRITICAL" || (now - lastCritTime >= CRIT_RATE_MS)) {
+        critMsg = createAlert("CRITICAL");
+        context.set(`${key}_lastCrit`, now);
+        context.set(`${key}_state`, "CRITICAL");
+    }
+} 
+// Trigger logic for Warning (Output 1)
+else if (confirmedSeverity === "WARNING") {
+    if (currentState !== "WARNING" || (now - lastWarnTime >= WARN_RATE_MS)) {
+        warnMsg = createAlert("WARNING");
+        context.set(`${key}_lastWarn`, now);
+        context.set(`${key}_state`, "WARNING");
+    }
+}
+
+return [warnMsg, critMsg];

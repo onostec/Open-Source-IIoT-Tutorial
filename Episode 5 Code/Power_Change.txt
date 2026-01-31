@@ -1,0 +1,11 @@
+{
+    "name": "Power",
+    "unit": "W",
+    "warnLow": 0,
+    "warnHigh": 22,
+    "critLow": 0,
+    "critHigh": 30,
+    "debounceSeconds": 3,
+    "warnRateLimitMin": 20,
+    "critRateLimitMin": 5
+}
