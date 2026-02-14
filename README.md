@@ -20,5 +20,10 @@ Take your Node-RED dashboard global! Learn to set up mobile alerts, remote contr
 
 In this episode, we transform a local setup into a worldwide IIoT Edge Gateway. Using Remote-RED, we implement push notifications and "Question Nodes" that allow you to shut down a failing motor directly from your smartphone. We also dive into professional Javascript function nodes for debounce logic, state management, and localized timestamps. Download the code on GitHub and join the open-source automation revolution!
 
+4. **Episode 6: Predict Failure BEFORE It Happens! | Machine Learning Anomaly Detection | Node-RED + PZEM-004T**: https://youtu.be/hFWSKC9-gSM
+
+Predict motor failure using Node-RED and the PZEM-004T in this IIoT predictive maintenance tutorial. Learn CUSUM anomaly detection to spot current drift and stop failures before they happen.
+Stop reactive maintenance! Learn how to predict motor failure using Node-RED machine learning and the PZEM-004T. This Industry 4.0 tutorial covers CUSUM anomaly detection for IIoT. In this episode we show step-by-step Node-RED flows, simulate current drift, and build a Preventive Maintenance dashboard for motors and pumps.
+
 
 
